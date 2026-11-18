@@ -1,12 +1,17 @@
 {
-  "team": "",
-  "members": [],
-  "incident": "",
-  "decision_v1": "",
-  "decision_v2": "",
+  "team": "K5-L3A-DAY10-4changngulam-PoCtoPilotGate1",
+  "members": [
+    "NguyenDucTrung-2A202603423",
+    "NguyenHuyThu-2A202603356",
+    "DoMinhHieu-2A202603402",
+    "BuiVanLam-2A202603400"
+  ],
+  "incident": "S3",
+  "decision_v1": "Thu hẹp",
+  "decision_v2": "Thu hẹp",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "tracking DB luôn ghi `delay_cause` đúng và kịp trước khi khách gửi claim, và ngày hiệu lực trong bảng `policies` luôn được nhập đúng lúc ký phụ lục với hãng; ngoài thực tế kiện kẹt bão hay để trống nguyên nhân và cờ/ngày chính sách do người cập nhật tay (REFUND-v4 hiệu lực 01/12 vẫn `index_active = false` ngày 02/12).",
+    "reduce_or_prevent": "NGĂN phạt oan khi tracking trống nguyên nhân hoặc nguyên nhân không thuộc `fault_causes` của bản chính sách theo ngày hiệu lực (lỗi oan S3 35 → 0), nhưng chỉ GIẢM khi tracking ghi sai nguyên nhân (cổng tin `delay_cause` là sự thật); trần 2 lỗi/hãng/ngày chỉ giới hạn thiệt hại, không xác minh lỗi.",
+    "measure_in_pilot": "tỉ lệ kiện trễ có `delay_cause` trống hoặc sai so với biên bản hãng và số khiếu nại của hãng mỗi tuần ở kho CT; chi phí thật mỗi ticket (mock 4.405–4.456đ > 2.500đ đã ký); tỉ lệ chuyển người và thời gian chờ khi lượng ticket lên giờ cao điểm."
   }
 }
