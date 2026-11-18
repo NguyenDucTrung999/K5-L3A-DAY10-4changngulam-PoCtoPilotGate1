@@ -24,8 +24,8 @@ Trợ lý phải offer mức hoàn tiền khớp với con số trên ledger và
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 
-- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): …
-- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): …
+- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): chiều thứ Sáu, chị mở sổ cái hoàn tiền và danh sách lỗi đã ghi cho hãng, so với bảng của hãng và shop, và mọi dòng khớp mà không phải dò tay: mỗi khoản hoàn có đúng một dòng trong sổ cái, đúng khách đặt đơn, đúng số tiền đã báo khách, không đơn nào bị hoàn hai lần; mỗi lỗi ghi cho hãng đều có nguyên nhân thuộc lỗi hãng ghi trong tracking, nên hãng không có lý do cãi lại.
+- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): cuối ca 480 phút, không ca nào chờ quá 60 phút (`review_sla_minutes`), vì số ca trợ lý chuyển sang mỗi giờ không vượt sức duyệt của số người trực (6 ca/giờ/người); trợ lý chỉ chuyển những ca thật sự cần người (từ lỗi thứ 3 của cùng một hãng trong ngày, hoàn tự động cho một khách vượt 300.000đ/ngày, claim ngoài phạm vi), và mỗi ca kèm vấn đề, nguyên nhân, đề xuất xử lý để chị duyệt nhanh, không phải tra lại từ đầu.
 
 ---
 
@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
-| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Bước / hành vi được đo** | Bước **ghi lỗi hãng** (`file_carrier_fault`) | Lỗi trợ lý ghi cho hãng vận chuyển (tác hại cho bên thứ ba: hãng bị phạt oan) |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ lỗi ghi oan: số lệnh `file_carrier_fault` không có trong nhãn đúng, chia cho tổng số lệnh `file_carrier_fault` (%, trên bộ nền) | Tỉ lệ lỗi ghi cho hãng mà tracking **không có nguyên nhân ghi nhận** (`tracking.cause_recorded = false`), theo từng hãng mỗi ngày (%), kèm số lỗi tự động/hãng/ngày (lần) |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Sự kiện `tool: file_carrier_fault` (`ticket_id`, `parcel_id`, `carrier_id`) trong `runs/<mã lần chạy>/traces/`, 22 ticket × 5 seed = 110 lần chạy; nhãn đúng là `label.faults` trong `data/tickets.jsonl`, do người soạn lab gán từ tracking + chính sách | Trace production: sự kiện `tool: file_carrier_fault` và sự kiện `tracking` (`cause`, `cause_recorded`, `carrier_id`) của cùng ticket; sổ lỗi `faults`; khiếu nại của hãng gửi về (tuần). **Không có nhãn**: dùng "nguyên nhân có được ghi trong tracking không" và "hãng có khiếu nại không" thay nhãn |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Một lệnh là **oan** khi cặp (`ticket_id`, `parcel_id`) không có trong `label.faults`. Tỉ lệ = số lệnh oan / tổng số lệnh `file_carrier_fault`. Mẫu số chỉ gồm lần chạy có tới bước ghi lỗi; lần chạy dừng sớm (escalated, denied) bị loại khỏi mẫu số và đếm riêng. Lỗi lẽ ra phải ghi mà không ghi (trong nhãn, không trong trace) đếm riêng thành "bỏ sót" | Mỗi ngày, mỗi hãng: số lỗi đã ghi có `cause_recorded = false` / tổng số lỗi đã ghi cho hãng đó. Ngày không có lỗi nào: ghi "không có dữ liệu", không ghi 0%. Kèm: đếm số lỗi tự động/hãng/ngày so với trần 2 (`max_auto_strikes_per_carrier_per_day`) |
+| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | Theo ngày, từng hãng. **Đỏ:** ≥ 1 lỗi có `cause_recorded = false` trong ngày, hoặc lỗi tự động thứ 3 của một hãng → báo `operations.alert_channel`, NV-TUNG tắt `file_carrier_fault`. **Vàng:** ≥ 1 khiếu nại của hãng trong tuần → chị Oanh soát lại tuần đó |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không thấy nhãn sai (người soạn gán nhầm); chỉ đo trên 22 ticket nền, không thấy kiểu ticket mới; không thấy lỗi ghi đúng hãng nhưng sai kiện | Không thấy trường hợp tracking **có** ghi nguyên nhân nhưng ghi sai; hãng không khiếu nại không có nghĩa là không oan; trễ 1 tuần mới thấy khiếu nại |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
@@ -71,9 +71,9 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 ### Câu 1.5 · Chọn MỘT kết luận và giải thích một câu
 
-Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
+Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · ((b)) · (c) · (d)**
 
-Giải thích một câu: …
+Giải thích một câu: Chọn b  - Passrate thật của X có thể nằm bất cứ đâu từ 0.94 đến 1, và pass rate của Y cũng trong khoảng này (=1), nên chưa chắc Y đã tốt hơn X (loại a), X Y chưa chắc giống hệt nhau (loại c), đề không hỏi đạt hay không đạt (loại d).
 
 ---
 
