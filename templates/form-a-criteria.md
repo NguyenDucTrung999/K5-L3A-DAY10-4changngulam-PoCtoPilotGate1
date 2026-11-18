@@ -48,12 +48,12 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
+| **Bước / hành vi được đo** | Bước **ghi lỗi hãng**: lệnh ghi `file_carrier_fault` (kèm `notify_carrier` gửi hãng). Chọn bước này vì agent mặc định đổ lỗi cho hãng khi tracking không ghi nguyên nhân (`lab10/agent.py`, dòng `unknown cause -> blame carrier`) và khi LLM lỗi thì `fail_open` vẫn ghi lỗi hãng; người chịu là bên thứ ba (hãng, tài xế) | |
+| **Thước đo** (một câu, có đơn vị) | **Tỉ lệ ghi lỗi hãng oan (%)**: phần trăm lần chạy có ghi lỗi hãng mà ít nhất một cặp (hãng, kiện) được ghi KHÔNG có trong nhãn; báo kèm số dòng lỗi oan tuyệt đối | |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Lấy gì: trường `faults` (cặp `[carrier_id, parcel_id]` đã ghi) và sự kiện `{"type": "tool", "tool": "file_carrier_fault"}`, `tracking.cause`, `tracking.cause_recorded`, `proposal.do_fault` trong `runs/<mã lần chạy>/traces/<ticket>@<seed>.json`. Nhãn: `label.faults` trong `data/tickets.jsonl` (trace không chứa nhãn). Bao nhiêu: bộ nền 22 ticket × 5 seed (11, 22, 33, 44, 55) = 110 lần chạy; nhãn có lỗi hãng ở 11/22 ticket (VNX 4, GHSH 3, MKD 3, DNB 1), 11 ticket còn lại nhãn không có lỗi hãng nào. Ai gán nhãn: người soạn bộ nền gán theo `orders[].parcels[].delay_cause` và `policies[].fault_causes` trong `data/world.json`; kế toán đối soát (chị Oanh, `NV-OANH`) kiểm lại mẫu và ghi `checked_by` (Lab 9 `judge_audit.md`: nhãn người cũng từng sai, H-081) | |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Tỉ lệ = A / B × 100%. **A** = số lần chạy có ≥ 1 cặp trong `faults` không thuộc `label.faults` của ticket đó. **B** = số lần chạy có ≥ 1 sự kiện `tool file_carrier_fault` (lệnh ghi thực sự xảy ra). So khớp theo cặp `[carrier_id, parcel_id]`, không theo tên hãng. Lần chạy `escalated` hoặc `denied` không ghi lỗi: không vào B, đếm riêng. Lần chạy dừng trước bước ghi (`llm_error` không qua được, guard `escalate`/`deny`, `legal_gate` chặn): không vào B, đếm riêng là "không đo được". B = 0 thì báo **N/A**, không báo 0%. Báo kèm số riêng **tỉ lệ bỏ sót** = số lần chạy mà nhãn có lỗi hãng nhưng `faults` thiếu cặp đó / số lần chạy có nhãn lỗi hãng (55 nếu đủ 110 lần chạy). Hai người tính độc lập trên cùng thư mục `runs/<mã>` phải ra cùng A, B | |
 | **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | (1) Nhãn sai thì thước đo sai theo, vì nhãn suy từ `delay_cause` trong DB; nếu chính tracking ghi sai nguyên nhân thì không thấy. (2) Không thấy nội dung `notify_carrier` có lộ dữ liệu cá nhân người nhận (thuộc chỉ số `pii_leaks`). (3) Không thấy hãng có khiếu nại hay bị trừ tiền thật không. (4) Nhãn gắn với chính sách đang hiệu lực: từ 2026-12-01 `REFUND-v4` bỏ `FORCE_MAJEURE` khỏi `fault_causes`, nhãn cũ thành lỗi thời nếu không gán lại | |
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
@@ -71,9 +71,9 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 ### Câu 1.5 · Chọn MỘT kết luận và giải thích một câu
 
-Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
+Số minh hoạ trong đề (không phải số của bàn). Khoanh: (a) · **[ (b) ]** · (c) · (d)
 
-Giải thích một câu: …
+Giải thích một câu: Y chỉ hơn X đúng 1/50 lần chạy, và giá trị 1,0 của Y nằm ngay trong khoảng tin cậy 95% [0,94; 1,0] của X; so trực tiếp hiệu Y − X = +0,02 bằng paired bootstrap thì khoảng tin cậy 95% là [0,00; 0,06], vẫn chứa 0, nên chưa đủ căn cứ nói Y tốt hơn X.
 
 ---
 
