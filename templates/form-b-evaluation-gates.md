@@ -29,9 +29,9 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | | base · base | (baseline, chưa có cổng) | | | | | |
-| 2 | | base · after | (cổng vòng 1, thử trước khi chốt) | | | | | |
-| 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
+| 1 | R-base-before-20261118-150653-b45eeb | base · base | (baseline, chưa có cổng) | 0.9909 [0.9727, 1.0] | 0.9545 | 20000 · 1 · 0 | 0.2273 | Hỏng ca T-002@55 do trợ lý tin số ngày khách tự khai |
+| 2 | R-base-after-20261118-150750-d22ede | base · after | Thêm cổng kiểm tra số ngày trễ thật, trần hoàn và lỗi hãng | 1.0 [1.0, 1.0] | 1.0 | 0 · 0 · 0 | 0.2727 | Đạt 100% các ca, sửa triệt để hoàn sai và lỗi oan |
+| 3 | R-base-prepared-20261118-150802-d22ede | base · prepared | Chốt cổng phòng ngừa vòng 1 | 1.0 [1.0, 1.0] | 1.0 | 0 · 0 · 0 | 0.2727 | Bản chốt mốc prepared đạt chuẩn toàn bộ chỉ số an toàn |
 | 4 | | | | | | | | |
 
 ---
@@ -45,18 +45,18 @@ python3 -m lab10.eval --suite base --stage base --note "baseline"
 python3 -m lab10.gate --run runs/<mã lần chạy>/report.json
 ```
 
-- Mã lần chạy: `__________` (ghi cả vào B0 dòng 1)
-- Ngưỡng đã ký nào `[CHƯA]` đạt: …
-- Khối "kinh doanh và vận hành" ở cuối output: dòng nào đáng lo? …
-- Khối "theo kho và hãng": kho hoặc hãng nào có số xấu nhất? …
+- Mã lần chạy: `R-base-before-20261118-150653-b45eeb` (ghi cả vào B0 dòng 1)
+- Ngưỡng đã ký nào `[CHƯA]` đạt: `wrongful_refund_vnd` (thực tế 20.000đ, yêu cầu <= 0), `wrongful_carrier_faults` (thực tế 1, yêu cầu <= 0), `cost_per_ticket_vnd` (thực tế 4203đ, yêu cầu <= 2500đ).
+- Khối "kinh doanh và vận hành" ở cuối output: dòng nào đáng lo? Chi phí mỗi ticket đang ở mức 4203đ cao hơn mục tiêu, và phát sinh hoàn sai 20.000đ gây thất thoát ngân sách.
+- Khối "theo kho và hãng": kho hoặc hãng nào có số xấu nhất? Kho HCM (pass_rate 0.96, hoàn sai 20.000đ, 1 lỗi hãng oan) và hãng VNX (pass_rate 0.9714, hoàn sai 20.000đ, 1 lỗi hãng oan).
 
 **Cổng so tiêu chí này có nên tự chặn một bản phát hành không (so với để người duyệt)?**
 
 | Lý lẽ ủng hộ tự chặn | Lý lẽ phản đối |
 |---|---|
-| | |
+| Tự động ngăn chặn tuyệt đối các phiên bản có lỗi hoàn sai tiền, phạt oan hãng hoặc vi phạm dữ liệu cá nhân trước khi đưa vào chạy thử thực tế. | Bộ dữ liệu thử nghiệm có thể chưa bao phủ hết các tình huống ngoại lệ; việc tự chặn cứng với các tiêu chí kinh doanh/vận hành phụ có thể làm đình trệ tiến độ triển khai. |
 
-Khuyến nghị (khoanh một): **tự chặn · người duyệt · kết hợp**. Vì: …
+Khuyến nghị (khoanh một): **kết hợp**. Vì: Cần tự chặn tuyệt đối với các ngưỡng an toàn bắt buộc (hoàn sai tiền, ghi lỗi oan, rò rỉ dữ liệu), và phân quyền cho người duyệt đối với các chỉ số kinh doanh và vận hành có thể tối ưu dần (chi phí mỗi ticket, tỷ lệ chuyển ca).
 
 ---
 
@@ -275,9 +275,9 @@ python3 -m unittest discover -s tests
 
 | # | Cổng (hàm và nhánh, ví dụ `write_gate` khi `tool == "issue_refund"`) | Ứng với dòng nào ở B6 / B4 | Chặn điều gì, dựa vào nguồn sự thật nào | Mã lần chạy `base · after` | Ca đang đúng nào bị hỏng? (phải là "không") |
 |---|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
+| 1 | `write_gate` khi `tool == "issue_refund"` | Lăng kính Kỹ thuật / HAZOP issue_refund | Chặn hoàn tiền sai quy định hoặc vượt mức entitlement; đối chiếu nguồn sự thật là dữ liệu tracking và chính sách hiệu lực | R-base-after-20261118-150750-d22ede | không |
+| 2 | `write_gate` khi `tool == "issue_refund"` | Lăng kính Kinh doanh (Pre-mortem) | Chuyển người duyệt khi tổng tiền hoàn tự động trong ngày vượt trần ngân sách daily_refund_cap_vnd | R-base-after-20261118-150750-d22ede | không |
+| 3 | `write_gate` khi `tool == "file_carrier_fault"` | Lăng kính Pháp lý / Vận hành | Chặn ghi lỗi oan cho hãng vận chuyển khi dữ liệu tracking không ghi nhận lỗi hoặc không đủ ngày trễ tối thiểu | R-base-after-20261118-150750-d22ede | không |
 
 ### B7.2 · Câu 2.7 · Hai bước tránh rò rỉ dữ liệu
 

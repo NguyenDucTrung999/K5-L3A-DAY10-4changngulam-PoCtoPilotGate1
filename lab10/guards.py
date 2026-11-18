@@ -38,5 +38,50 @@ def pre_guard(ctx):
 
 
 def write_gate(ctx, action):
-    # action = {"tool": "issue_refund", "ticket_id":..., "order_id":..., "amount_vnd":..., "payer":..., ...}
+    tool_name = action.get("tool")
+    if tool_name == "issue_refund":
+        business_configuration = (ctx.gates or {}).get("business", {})
+        daily_refund_cap_vnd = business_configuration.get("daily_refund_cap_vnd")
+        if daily_refund_cap_vnd is not None:
+            current_auto_refund_spent_vnd = ctx.tools.auto_refund_today_vnd()
+            refund_amount_vnd = action.get("amount_vnd", 0)
+            if current_auto_refund_spent_vnd + refund_amount_vnd > daily_refund_cap_vnd:
+                return Verdict.escalate("Vượt trần hoàn tiền tự động trong ngày, chuyển nhân viên duyệt")
+
+        order_identifier = action.get("order_id")
+        order_record = ctx.tools.lookup_order(order_identifier)
+        if order_record is not None:
+            parcel_record = H.ticket_parcel(order_record, ctx.ticket, ctx.as_of)
+            actual_delay_days = H.db_delay_days(parcel_record, ctx.as_of)
+            policy_records = ctx.tools.lookup_policies()
+            active_policy = H.effective_policy(policy_records, ctx.as_of)
+            if active_policy is not None:
+                entitled_amount_vnd = H.entitlement_vnd(
+                    active_policy,
+                    order_record,
+                    actual_delay_days,
+                    parcel_record.get("delay_cause")
+                )
+                approval_identifier = action.get("approval_id")
+                if approval_identifier is None:
+                    if action.get("amount_vnd", 0) > entitled_amount_vnd:
+                        return Verdict.deny("Số tiền yêu cầu hoàn vượt quá hạn mức theo quy định thực tế")
+
+    if tool_name == "file_carrier_fault":
+        order_identifier = action.get("order_id")
+        order_record = ctx.tools.lookup_order(order_identifier)
+        if order_record is not None:
+            parcel_record = H.ticket_parcel(order_record, ctx.ticket, ctx.as_of)
+            actual_delay_days = H.db_delay_days(parcel_record, ctx.as_of)
+            policy_records = ctx.tools.lookup_policies()
+            active_policy = H.effective_policy(policy_records, ctx.as_of)
+            if active_policy is not None:
+                carrier_fault_confirmed = H.carrier_at_fault(
+                    active_policy,
+                    parcel_record,
+                    actual_delay_days
+                )
+                if carrier_fault_confirmed is False:
+                    return Verdict.deny("Hãng vận chuyển không có lỗi theo dữ liệu thực tế")
+
     return Verdict.allow()
