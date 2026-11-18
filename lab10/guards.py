@@ -34,6 +34,11 @@ from .tools import Verdict
 
 
 def pre_guard(ctx):
+    # Vòng 2 · thẻ S3: ghim chính sách theo NGÀY HIỆU LỰC (effective_from/effective_to = nguồn sự thật),
+    # không theo cờ index_active (bản sao, có thể chưa ai bật khi luật mới có hiệu lực).
+    active_policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+    if active_policy is not None:
+        return Verdict.allow(policy_id=active_policy["policy_id"])
     return Verdict.allow()
 
 
@@ -83,5 +88,16 @@ def write_gate(ctx, action):
                 )
                 if carrier_fault_confirmed is False:
                     return Verdict.deny("Hãng vận chuyển không có lỗi theo dữ liệu thực tế")
+
+        # Vòng 2 · thẻ S3: trần lỗi tự động cho MỘT hãng trong ngày (ops_limits, đã thống nhất với Ops/Finance).
+        # Từ lỗi thứ (trần + 1) không tự ghi nữa; khoản hoàn cho khách giữ nguyên, lỗi hãng chờ người duyệt xác nhận.
+        strike_cap = (ctx.tools.ops_limits() or {}).get("max_auto_strikes_per_carrier_per_day")
+        carrier_identifier = action.get("carrier_id")
+        if strike_cap is not None and carrier_identifier:
+            strikes_today = len(ctx.tools.fault_rows(carrier_id=carrier_identifier))
+            if strikes_today >= strike_cap:
+                ctx.log("carrier_strike_cap", carrier_id=carrier_identifier, strikes_today=strikes_today, cap=strike_cap)
+                return Verdict.deny(f"Hãng {carrier_identifier} đã có {strikes_today} lỗi tự động hôm nay "
+                                    f"(trần {strike_cap}); lỗi này cần người duyệt xác nhận")
 
     return Verdict.allow()
