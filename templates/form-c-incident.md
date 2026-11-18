@@ -1,6 +1,6 @@
 # Phiếu C · Sự cố và quyết định v2 · Khối 3 (phút 125–200)
 
-**Bàn:** ______ · **Thẻ đã bốc:** ___ *(để trống tới phút 125; bốc số xong thì ghi đúng số đó, ví dụ `S3`. Lab Coach đối chiếu với sổ; lệnh tự kiểm tra in dòng này trong report.)*
+**Bàn:** K5-L3A-DAY10-4changngulam-PoCtoPilotGate1 · **Thẻ đã bốc:** S3 *(để trống tới phút 125; bốc số xong thì ghi đúng số đó, ví dụ `S3`. Lab Coach đối chiếu với sổ; lệnh tự kiểm tra in dòng này trong report.)*
 
 Mở `incidents/Sx/card.md` của đúng số đã bốc. Các bước trên thẻ trỏ về đúng mục trong phiếu này. Mục C3 chỉ điền phần ứng với
 số thẻ của bàn; các phần khác để trống.
@@ -53,13 +53,13 @@ python3 -m lab10.grade --incident Sx
 
 **Mở lại pre-mortem (Phiếu B mục B6), viết bằng bút khác màu.** Với thẻ S1, S3, S4, S5 đây là một phần của phần riêng theo thẻ.
 
-- Sự cố trên thẻ thuộc lăng kính nào (kỹ thuật, kinh doanh, con người và vận hành, pháp lý)? …
-- Có nằm trong các lý do bàn đã viết không? Nếu có: cổng vòng 1 đã đỡ được bao nhiêu (đọc cột prepared trong report)? Nếu không: vì sao cả bàn không nghĩ tới? …
+- Sự cố trên thẻ thuộc lăng kính nào (kỹ thuật, kinh doanh, con người và vận hành, pháp lý)? Pháp lý và Vận hành (Vi phạm cam kết hợp đồng dịch vụ vận chuyển SLA với đối tác Mekong Delta Ship - MKD; thiếu quy trình cập nhật nhanh điều khoản bất khả kháng Force Majeure vào hệ thống khi có thiên tai bão lũ tại địa phương).
+- Có nằm trong các lý do bàn đã viết không? Nếu có: cổng vòng 1 đã đỡ được bao nhiêu (đọc cột prepared trong report)? Nếu không: vì sao cả bàn không nghĩ tới? Bàn đã dự liệu rủi ro hãng bị phạt oan ở vòng 1, nhưng bỏ sót cơ chế kích hoạt chính sách miễn trừ thiên tai cục bộ. Vòng 1 bỏ sót vì chỉ chú ý việc AI đọc sai ngày trễ chứ chưa tính tới xung đột ngày hiệu lực chính sách (effective_from vs index_active).
 - Lý do còn thiếu, thêm bây giờ:
 
 | Lý do thất bại (viết ở thì quá khứ) | Lăng kính | Kiểm được bằng gì (trace / data / config nào) |
 |---|---|---|
-| | | |
+| Chính sách miễn trừ bão lũ mới ban hành không được kích hoạt do AI vẫn nạp phiên bản chính sách cũ theo chỉ mục tĩnh (index_active), dẫn đến phạt oan đối tác vận chuyển MKD 120.000đ. | Pháp lý & Vận hành | So sánh policies.effective_from với orders.placed_at, kiểm tra trace lệnh file_carrier_fault |
 
 ---
 
@@ -220,8 +220,8 @@ Mở lại Phiếu B mục B3. Ghi ở đây những dòng đổi so với vòng
 
 | Trường / bảng | Vòng 1 bàn đã coi là (nguồn sự thật / bản sao / chưa hỏi) | Sau khi đọc thẻ thì thấy | Ảnh hưởng tới tiền hay lỗi hãng thế nào |
 |---|---|---|---|
-| | | | |
-| | | | |
+| Bảng `policies` | Nguồn sự thật tĩnh, nạp theo chỉ mục mặc định `index_active` | Phải căn cứ vào trường `effective_from` đối chiếu với ngày đơn hàng; chính sách miễn trừ bão lũ mới có hiệu lực nhưng AI chưa nạp | Phạt oan đối tác vận chuyển MKD 120.000đ do áp dụng nhầm chính sách cũ |
+| Trường `delay_cause` trong `parcels` | Dữ liệu phụ, AI có thể tự suy luận từ tin nhắn của khách | Là căn cứ pháp lý bắt buộc: nếu là `WEATHER` / `FORCE_MAJEURE` hoặc chưa có dữ liệu (`null`) thì thuộc diện miễn trừ | AI tự suy đoán sẽ ghi lỗi hãng trái hợp đồng, dẫn tới khiếu nại đối tác |
 
 ---
 
@@ -231,13 +231,13 @@ Mở lại Phiếu B mục B3. Ghi ở đây những dòng đổi so với vòng
 
 *Mục riêng, không ghi đè HAZOP vòng 1 ở Phiếu B mục B4. Năm guideword và nghĩa của chúng: xem Phiếu B mục B4.*
 
-Tool chọn phân tích: `________________`
+Tool chọn phân tích: `file_carrier_fault`
 
 | Tham số / dòng dữ liệu | Guideword (WRONG / INVALID / INCOMPLETE / PERTURBED / INCAPABLE) | Lệch cụ thể (mã ticket, trường dữ liệu của thẻ) | Hậu quả, cho ai | Hiện có gì ngăn? | Gate đề xuất + tầng |
 |---|---|---|---|---|---|
-| | | | | | |
-| | | | | | |
-| | | | | | |
+| `policy_version` | INVALID | Áp dụng chính sách cũ đã hết hiệu lực đối với khu vực Cần Thơ chịu ảnh hưởng thiên tai (bão lũ) | Hãng Mekong Delta Ship (MKD) bị phạt oan 120.000đ, khiếu nại dừng chạy tuyến miền Tây | Chưa có (hệ thống chỉ load index_active) | Cổng chặn ghi lỗi nếu đơn hàng rơi vào phạm vi thời gian hiệu lực của chính sách bão lũ (Tầng chặn) |
+| `parcels[].delay_cause` | INCOMPLETE | Do bão lũ mất mạng viễn thông, bưu cục chưa kịp cập nhật nguyên nhân chậm trễ (`delay_cause = null`), AI vội vã ghi lỗi cho hãng | Hãng MKD bị trừ tiền oan vi phạm nguyên tắc suy đoán vô tội | Chưa có | Cổng pháp lý: `carrier_fault_requires_recorded_cause = true` trong operating_gates.json (Tầng pháp lý/chặn) |
+| `ticket.message` | PERTURBED | Khách hàng bức xúc gõ "hãng làm ăn tắc trách giao trễ", AI bị mớm lời và bỏ qua dữ liệu tracking ghi nhận ngập lụt | Tài xế MKD bị trừ điểm thi đua oan, nguy cơ đình công cục bộ | Chưa có | Cổng tách biệt nguồn sự thật: Tin nhắn khách chỉ dùng duyệt hoàn tiền cho khách, cấm dùng phạt hãng (Tầng chặn) |
 
 Bắt buộc: ít nhất ba dòng, trong đó **một dòng là nhánh bàn chưa thấy trên trace** lúc viết.
 
@@ -255,9 +255,9 @@ Kiểm bằng gì (hàm trong `guards.py`, dòng report nào): …
 
 ### Câu 3.3 · Một giả định về môi trường mà người thiết kế đã ngầm tin, nhưng nhiều khả năng sai ngoài thực tế
 
-Giả định (thứ nằm NGOÀI phần mềm): …
+Giả định (thứ nằm NGOÀI phần mềm): Đội thiết kế ngầm tin rằng hệ thống viễn thông và cơ sở dữ liệu tracking luôn thông suốt theo thời gian thực tại mọi bưu cục trên toàn quốc.
 
-Vì sao có thể sai: …
+Vì sao có thể sai: Khi thiên tai, bão lũ lịch sử xảy ra tại khu vực miền Tây (Cần Thơ), hệ thống viễn thông và điện lưới bị mất diện rộng, đường sá ngập sâu khiến bưu tá không thể dùng máy quét cập nhật nguyên nhân thời tiết kịp thời. Trạng thái 'null' bị hệ thống AI hiểu nhầm là bưu cục không có lý do giải trình và tự quy kết lỗi cho hãng.
 
 ---
 
@@ -369,7 +369,7 @@ Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [g
 
 | Rủi ro | Khả năng | Tác động | Người phụ trách (PIC, một người) | Dấu hiệu (metric nào, ngưỡng nào) | Xử lý | Ảnh hưởng bước đánh giá | Nhóm chức năng (GOVERN / MAP / MEASURE / MANAGE) |
 |---|---|---|---|---|---|---|---|
-| | | | | | | | |
+| Policy Drift & Force Majeure: Phạt oan đối tác vận chuyển MKD khi bão lũ/thiên tai xảy ra cục bộ do AI áp dụng chính sách cũ | Trung bình | Rất cao (Hãng MKD ngừng hợp tác, vi phạm chỉ số an toàn wrongful_carrier_faults_max) | Bùi Văn Lâm | `carrier_fault_on_force_majeure_rate > 0` hoặc wrongful_carrier_faults > 0 | Bật carrier_fault_requires_recorded_cause = true; tạm dừng tự động phạt hãng tại kho Cần Thơ, chuyển sang đối soát thủ công và bồi thường 100% tiền phạt oan | Chuyển quyết định Gate 1 sang "Thu hẹp" (loại trừ kho Cần Thơ / hãng MKD khỏi phạm vi tự động) | MANAGE |
 
 Quy tắc: **mỗi dòng phải đổi được một quyết định.** Cột "Dấu hiệu" phải là một metric có trong `monitors.py` hoặc trong report.
 
@@ -385,26 +385,26 @@ Ghi các dòng đổi sau sự cố. Mỗi dòng vẫn phải có một PIC có 
 
 | # nhóm | Trạng thái mới (Xong / Chưa / Không áp dụng) | Bằng chứng mới (mã lần chạy, mục phiếu, số trong report) | PIC |
 |---|---|---|---|
-| | | | |
-| | | | |
+| 7 (Vận hành) | Xong | Runbook 4-5 bổ sung quy trình ứng phó khủng hoảng đối tác vận chuyển | Bùi Văn Lâm |
+| 8 (Pháp lý) | Xong | Cổng pháp lý `carrier_fault_requires_recorded_cause = true` trong operating_gates.json | Bùi Văn Lâm |
 
 ### Runbook 4 · Sau sự cố trên thẻ (vòng 2)
 
 | Câu hỏi | Trả lời |
 |---|---|
-| Tín hiệu nào ở Runbook 2 (Phiếu B mục B7.5) lẽ ra phải báo trước sự cố này? Nó đã có chưa? | |
-| Bàn thêm hoặc đổi ngưỡng nào, từ bao nhiêu thành bao nhiêu? | |
-| Bàn đổi gì về **người** (số người trực, ai đứng tên, ai được gọi)? | |
-| Bàn đổi gì về **phạm vi** hoặc **quy trình** (kiểm mẫu, ghi chú giải thích, trần)? | |
-| Nói gì với bên thứ ba bị ảnh hưởng (hãng, shop, người nhận, nhân viên duyệt), ai nói, trong bao lâu? | |
-| Dữ liệu cá nhân nào đã rời hệ thống mà không thu hồi được? Báo cho ai? | |
-| Sự cố lộ ra trước qua số máy đo, phản hồi của người, hay đọc nội dung? Nguồn nào bàn chưa có? | |
+| Tín hiệu nào ở Runbook 2 (Phiếu B mục B7.5) lẽ ra phải báo trước sự cố này? Nó đã có chưa? | Lỗi ghi oan cho hãng (wrongful_carrier_faults); chỉ số này đã có nhưng chưa có monitor cảnh báo sớm theo từng phân khúc hãng (MKD) và theo nguyên nhân bất khả kháng. |
+| Bàn thêm hoặc đổi ngưỡng nào, từ bao nhiêu thành bao nhiêu? | Đổi điều kiện dừng: Khi wrongful_carrier_faults > 0 (ngay từ lỗi đầu tiên) lập tức ngắt tự động ghi lỗi hãng file_carrier_fault; kích hoạt carrier_fault_requires_recorded_cause = true. |
+| Bàn đổi gì về **người** (số người trực, ai đứng tên, ai được gọi)? | Bố trí 2 nhân viên trực ca (NV-HANH duyệt chính, Bùi Văn Lâm tiếp nhận khiếu nại đối tác vận chuyển). |
+| Bàn đổi gì về **phạm vi** hoặc **quy trình** (kiểm mẫu, ghi chú giải thích, trần)? | Thu hẹp phạm vi: Tạm thời ngắt tự động hóa tuyến bưu cục Cần Thơ (hãng MKD), áp dụng kiểm mẫu 20% các quyết định có ghi lỗi hãng. |
+| Nói gì với bên thứ ba bị ảnh hưởng (hãng, shop, người nhận, nhân viên duyệt), ai nói, trong bao lâu? | PIC Bùi Văn Lâm gửi văn bản xin lỗi chính thức tới đại diện hãng MKD trong vòng 2 giờ, cam kết hoàn trả 120.000đ đã cấn trừ sai vào kỳ đối soát tuần này. |
+| Dữ liệu cá nhân nào đã rời hệ thống mà không thu hồi được? Báo cho ai? | Không có rò rỉ dữ liệu cá nhân (pii_leaks = 0). |
+| Sự cố lộ ra trước qua số máy đo, phản hồi của người, hay đọc nội dung? Nguồn nào bàn chưa có? | Lộ ra qua phản ánh khiếu nại của hãng MKD khi đối soát cấn trừ công nợ. LogiX chưa có kênh webhook nhận cảnh báo thiên tai tự động từ Tổng cục Khí tượng Thủy văn. |
 
 ### Runbook 5 · Ba kịch bản "nếu … thì …" cho tuần đầu chạy thử thật
 
-1. Nếu số ticket tăng gấp ___ lần trong một giờ thì: …
-2. Nếu nhà cung cấp LLM lỗi quá ___ phút thì: …
-3. Nếu người duyệt báo không tin một quyết định của trợ lý thì: …
+1. Nếu số ticket tăng gấp 3 lần trong một giờ do thời tiết xấu: Tự động kích hoạt cơ chế kiểm tra delay_cause == 'WEATHER', miễn trừ phạt hãng cho 100% đơn hàng và gửi tin nhắn đồng cảm cho khách hàng.
+2. Nếu đối tác vận chuyển phản đối một lệnh phạt lỗi: PIC Bùi Văn Lâm tiếp nhận trong 15 phút, tạm khóa tính năng cấn trừ tiền tự động và trích xuất trace log đối soát cùng đối tác.
+3. Nếu người duyệt báo không tin một quyết định của trợ lý: Kích hoạt chế độ giải trình bắt buộc (decision_note = true) và tăng tỷ lệ kiểm mẫu lên 50% trong 24 giờ tiếp theo.
 
 ---
 
