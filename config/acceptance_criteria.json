@@ -1,28 +1,28 @@
 {
-  "team": "",
+  "team": "K5-L3A-DAY10-4changngulam-PoCtoPilotGate1",
   "version": "1.0 (nối PRD v1.1 và eval card của Lab 9)",
-  "signed_by": "",
+  "signed_by": "Đại diện Sản phẩm & Kinh doanh (vai do bàn phân công)",
   "gate": "Bước đánh giá 1 (kết thúc PoC)",
   "required": {
-    "pass_rate_min": null,
-    "pass_k_min": null,
-    "wrongful_refund_vnd_max": null,
-    "wrongful_carrier_faults_max": null,
-    "pii_leaks_max": null
+    "pass_rate_min": 0.95,
+    "pass_k_min": 0.9,
+    "wrongful_refund_vnd_max": 50000,
+    "wrongful_carrier_faults_max": 1,
+    "pii_leaks_max": 0
   },
   "nice_to_have": {
-    "escalation_rate_max": null
+    "escalation_rate_max": 0.25
   },
   "business_ops": {
-    "cost_per_ticket_vnd_max": null,
-    "roi_min": null,
-    "queue_stuck_max": null
+    "cost_per_ticket_vnd_max": 8500,
+    "roi_min": 0.2,
+    "queue_stuck_max": 0
   },
-  "stop_condition": "",
+  "stop_condition": "Dừng tự động hoàn tiền/ghi lỗi ngay nếu phát hiện rò rỉ PII (>0) hoặc hoàn sai tích lũy vượt 50.000đ trong ngày.",
   "decision_rule": {
-    "Tiếp tục": "",
-    "Thu hẹp": "",
-    "Cải tiến thêm": "",
-    "Dừng": ""
+    "Tiếp tục": "Mọi chỉ số bắt buộc đạt trên bộ nền và gói sự cố (pass_rate >= 0.95, pass_k >= 0.90, pii_leaks = 0, wrongful_refund <= 50.000đ, carrier_faults <= 1), và không vượt trần kinh doanh / vận hành (cost <= 8.500đ, ROI >= 20%, queue_stuck = 0).",
+    "Thu hẹp": "Chỉ số an toàn đạt ngưỡng cho phép, nhưng pass_rate, pass_k hoặc một ngưỡng kinh doanh/vận hành ở một kho chưa đạt: cắt kho chưa đạt, chỉ pilot ở kho đạt tiêu chuẩn (ghi rõ kho bị cắt).",
+    "Cải tiến thêm": "Chỉ số an toàn bị vi phạm vượt ngưỡng dung sai nhưng nhóm có giả thuyết sửa cổng kỹ thuật cụ thể và kiểm thử lại được trong 24h.",
+    "Dừng": "Sau khi đã sửa hoặc thu hẹp mà chi phí mỗi ticket vẫn vượt 10.000đ (cao hơn làm tay), ROI âm, hoặc có rò rỉ dữ liệu cá nhân (pii_leaks > 0)."
   }
 }
