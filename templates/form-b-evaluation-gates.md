@@ -120,24 +120,24 @@ Gợi ý: mở `data/world.json` phần `policies`, `orders[].parcels`, `ops_lim
 
 | Mục | Điền cho trợ lý hoàn tiền |
 |---|---|
-| Người dùng | |
-| Việc người dùng cần làm xong | |
-| Đầu ra của hệ thống (kể cả các lệnh ghi) | |
-| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | |
-| Trường then chốt quyết định tiền và lỗi hãng | |
-| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | |
-| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | |
-| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | |
-| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | |
+| Người dùng | Khách hàng mua sắm tại sàn LogiX-VN bị giao trễ; nhân viên CSKH |
+| Việc người dùng cần làm xong | Nhận tiền bồi hoàn đúng chính sách khi đơn hàng bị giao trễ hẹn |
+| Đầu ra của hệ thống (kể cả các lệnh ghi) | Lệnh hoàn tiền (issue_refund), ghi lỗi hãng (file_carrier_fault), báo hãng (notify_carrier), trả lời khách (send_reply), chuyển người duyệt (escalate) |
+| Dữ liệu trợ lý đọc lúc chạy (bảng nào trong `data/world.json`) | tickets, orders, parcels, tracking, policies, ledger, approvals |
+| Trường then chốt quyết định tiền và lỗi hãng | parcels[].delivered_date, parcels[].promised_date, parcels[].delay_cause, orders[].shipping_fee_vnd, orders[].refund_status |
+| Với mỗi trường then chốt: **nguồn sự thật** hay **bản sao** (ai cập nhật, khi nào)? | Nguồn sự thật: tracking DB (máy quét bưu cục ghi nhận khi phát hàng), orders DB (hệ thống thanh toán ghi nhận). Bản sao/Input ngoài: ticket.message, customer_claimed_delay_days (khách tự khai). |
+| Định dạng cần để ý (ngày, trường được phép trống, đơn nhiều kiện) | Định dạng ngày YYYY-MM-DD; đơn nhiều kiện (parcels mảng); đơn quà tặng (is_gift = true, người nhận khác người mua) |
+| Thế giới thật làm dữ liệu lệch ở đâu (theo mùa, đổi chính sách, giờ cao điểm, người nhập tay)? | Mùa mưa bão/Tết bưu cục quá tải nhập bù ngày quét; phát sinh lý do bất khả kháng (WEATHER) trong tracking; khách khai man số ngày trễ |
+| Câu người ngoài sẽ hỏi về nguồn dữ liệu ("sao hệ thống biết đơn trễ mấy ngày?") | "Hệ thống tính ngày trễ từ máy quét phát hàng thực tế của bưu cục trong tracking DB hay chỉ nghe khách tự khai trong tin nhắn?" |
 
 **Tóm lại (điền vào chỗ trống):**
-Trợ lý dùng `__________`, `__________`, `__________` để giúp `__________` làm được `__________`.
-Trường mà nếu sai thì tiền hoặc lỗi hãng sai theo: `__________`, `__________`.
-Chúng tôi biết thế giới thật sẽ làm dữ liệu lệch ở: `__________`. Dấu hiệu nhìn thấy sớm nhất: `__________`.
+Trợ lý dùng `tracking DB`, `thông tin đơn hàng (orders)`, `chính sách bồi hoàn (policies)` để giúp `khách hàng và CSKH LogiX` làm được `xử lý bồi hoàn giao hàng trễ nhanh chóng, tự động và công bằng`.
+Trường mà nếu sai thì tiền hoặc lỗi hãng sai theo: `parcels[].delay_cause`, `parcels[].delivered_date`.
+Chúng tôi biết thế giới thật sẽ làm dữ liệu lệch ở: `lý do bất khả kháng mùa mưa bão và việc bưu cục quét chậm/nhập bù ngày phát`. Dấu hiệu nhìn thấy sớm nhất: `tỉ lệ hãng vận chuyển khiếu nại lỗi ghi oan tăng đột biến`.
 
-**Ví dụ drift trong 3 tháng tới** (lấy từ dòng "thế giới thật làm dữ liệu lệch"): cái gì đổi `____` · đổi ngày nào `____` ·
-trường nào cho thấy `____` · con số nào của Bản tiêu chí bị ảnh hưởng `____`.
-Đây là đầu vào đổi hay quan hệ vào–ra đổi? Chỉ số nào sẽ phát hiện? `__________`
+**Ví dụ drift trong 3 tháng tới** (lấy từ dòng "thế giới thật làm dữ liệu lệch"): cái gì đổi `nguyên nhân trễ bổ sung thêm WEATHER/FORCE_MAJEURE` · đổi ngày nào `2026-12-01` ·
+trường nào cho thấy `parcels[].delay_cause` · con số nào của Bản tiêu chí bị ảnh hưởng `wrongful_carrier_faults_max`.
+Đây là đầu vào đổi hay quan hệ vào–ra đổi? Chỉ số nào sẽ phát hiện? `Quan hệ vào-ra đổi (Policy/Rule Drift). Chỉ số phát hiện: Tỉ lệ phản đối bồi thường của hãng vận chuyển và kiểm toán trace lỗi hãng.`
 
 **Ví dụ một dòng (đừng chép):** trường then chốt `parcels[].delivered_date` · bản ghi do máy quét ở điểm phát tạo ra, là nguồn
 sự thật về ngày giao · lệch khi điểm phát quét sót hoặc nhập bù bằng tay.
@@ -308,10 +308,10 @@ Mỗi con số kèm một câu lý do, lấy từ `data/world.json` → `ops_lim
 
 | Khoá | Giá trị bàn đặt | Lý do (một câu, có số) |
 |---|---|---|
-| `business.daily_refund_cap_vnd` | | |
-| `business.cost_budget_per_ticket_vnd` | | |
-| `business.pilot_scope` (all / warehouse / percent) | | |
-| `business.roi_min` | | |
+| `business.daily_refund_cap_vnd` | 2000000 | Bằng trần ngân sách hoàn tự động hàng ngày 2.000.000đ của Finance (ops_limits.daily_auto_refund_budget_vnd). |
+| `business.cost_budget_per_ticket_vnd` | 1500 | Bằng trần chi phí LLM tối đa 1.500đ/ticket quy định trong ops_limits.max_llm_cost_per_ticket_vnd. |
+| `business.pilot_scope` (all / warehouse / percent) | {"mode": "all", "warehouses": [], "percent": 100} | Chạy thử toàn diện 100% phạm vi cho các kho để đánh giá đầy đủ hành vi. |
+| `business.roi_min` | 0.20 | Đảm bảo hiệu quả đầu tư tối thiểu 20% so với chi phí làm thủ công. |
 
 ### B7.5 · Câu 2.10 · Cổng con người, vận hành, pháp lý + Runbook phần 1–3
 
