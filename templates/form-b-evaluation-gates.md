@@ -272,13 +272,7 @@ Bốn lăng kính (bắt buộc đủ cả bốn; dự án AI hay chết ở ba 
 
 ### B7.1 · Câu 2.6 · 2–3 cổng phòng ngừa trong `lab10/guards.py`
 
-Mỗi cổng ứng với một dòng pre-mortem (B6) hoặc một dòng HAZOP (B4). Viết trong `pre_guard(ctx)` (trước khi trợ lý đọc ticket)
-hoặc `write_gate(ctx, action)` (trước mỗi lệnh ghi). Thử bằng:
-
-```bash
-python3 -m lab10.eval --suite base --stage after --note "cổng vòng 1: ..."
-python3 -m unittest discover -s tests
-```
+Mỗi cổng ứng với một dòng pre-mortem (B6) hoặc một dòng HAZOP (B4)
 
 | # | Cổng (hàm và nhánh, ví dụ `write_gate` khi `tool == "issue_refund"`) | Ứng với dòng nào ở B6 / B4 | Chặn điều gì, dựa vào nguồn sự thật nào | Mã lần chạy `base · after` | Ca đang đúng nào bị hỏng? (phải là "không") |
 |---|---|---|---|---|---|
