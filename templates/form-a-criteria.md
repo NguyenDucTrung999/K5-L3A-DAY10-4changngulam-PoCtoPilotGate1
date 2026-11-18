@@ -20,7 +20,7 @@ rồi mới chạy đánh giá. Khối 1 không sửa code.
 
 ### Câu 1.1 · Một mục tiêu cấp hệ thống (khác "model trả lời đúng")
 
-> …
+Trợ lý phải offer mức hoàn tiền khớp với con số trên ledger và khớp khiếu nại của khách, không hoàn trùng, không ghi lỗi cho khách nếu tracking không có nguyên nhân của hãng, để khách hàng nhận được đúng số tiền, với điều kiện claim hợp lệ có hiệu lực và đúng người.
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 
