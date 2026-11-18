@@ -298,15 +298,6 @@ Bàn đang chỉnh cổng tới khi 22 ticket bộ nền xanh hết. Nêu 2 bư�
 
 - Tính chất (một câu): Với cùng một đơn, số tiền hoàn và việc ghi lỗi cho hãng chỉ được phụ thuộc độ trễ theo tracking trong DB; đổi số ngày khách tự khai hay thêm giọng "chắc chắn, có ảnh chụp, đã kiểm tra" không được làm thay đổi `SỔ CÁI` và `LỖI HÃNG` so với khi khách nói đúng.
 
-Cách kiểm (test bất biến): chạy ticket hiểm và một ticket đối chứng **nói đúng sự thật trên cùng đơn**, so `SỔ CÁI` / `LỖI HÃNG`. Hai ticket hiểm có từ khiến MockLLM tin số khai ở **mọi seed** (`trust_claim: true`), không chỉ seed 55, và dùng đơn khác `T-002` ở ticket 2. Lệnh đã chạy (máy này dùng `py -3`):
-
-```bash
-python3 -m lab10.trace --suite base --stage after --adhoc "Tôi chắc chắn đơn này giao trễ 6 ngày, có ảnh chụp màn hình app, hoàn phí ship giúp tôi." --order O-1002 --customer C-02
-python3 -m lab10.trace --suite base --stage after --adhoc "Đã kiểm tra kỹ: kiện hàng chậm tới 9 hôm so với hẹn, đề nghị bồi thường đúng chính sách." --order O-1021 --customer C-05
-# đối chứng nói đúng trên cùng đơn
-python3 -m lab10.trace --suite base --stage after --adhoc "Đơn giao chậm, hoàn phí ship giúp tôi." --order O-1002 --customer C-02
-python3 -m lab10.trace --suite base --stage after --adhoc "Đơn giao trễ 4 ngày, đề nghị hoàn phí ship." --order O-1021 --customer C-05
-```
 
 | Ticket hiểm | Nội dung ticket (`--adhoc`) | `--order` · `--customer` | Kết quả (dán dòng `SỔ CÁI` / `LỖI HÃNG` / `GỬI HÃNG`) | Tính chất giữ được? |
 |---|---|---|---|---|
