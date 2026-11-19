@@ -5,7 +5,7 @@
 - Tên nhóm (`TenNhom`, không dấu, không khoảng trắng): 4changngulam
 - Lớp: `L3A`
 - Repo của bàn: `K5-L3A-DAY10-4changngulam-PoCtoPilotGate1`
-- Thẻ sự cố đã bốc (S1–S8): (chờ bốc thăm ở phút 125)
+- Thẻ sự cố đã bốc (S1–S8): S3
 
 ## Thành viên
 
